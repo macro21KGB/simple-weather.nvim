@@ -2,8 +2,8 @@ local M = {}
 local curl = require("plenary.curl")
 
 M._config = {
-  city = "Naples",
-  lang = "it"
+  city = "",
+  lang = ""
 }
 
 M.setup = function(opts)
@@ -13,18 +13,13 @@ M.setup = function(opts)
   end
 
   vim.api.nvim_create_user_command("Weather", function()
-    M.get_weather()
+    M.get_weather(opts)
   end, {})
 end
 
-M.get_weather = function()
-  local city = M._config.city
-  local lang = M._config.lang
-
-  if city == "" then
-    vim.notify("Please set a city in the configuration", vim.log.levels.ERROR)
-    return
-  end
+M.get_weather = function(opts)
+  local city = opts.city or nil
+  local lang = opts.lang or "en"
 
   local url = string.format("https://wttr.in/%s?0&lang=%s&format=j1", city, lang)
 
@@ -39,9 +34,9 @@ M.get_weather = function()
             local json = vim.json.decode(response.body)
             local current = json["current_condition"][1]
 
-            local formatted_data = string.format("%s (%s)\n%s,%s", M._config.city,
+            local formatted_data = string.format("%s (%s)\n%s", city or "Current Location",
               current["lang_" .. M._config.lang][1].value,
-              current["temp_C"] .. "°", "(" .. current["FeelsLikeC"] .. "°)")
+              string.format("%d°(%d°)", current["temp_C"], current["FeelsLikeC"]))
             vim.notify(formatted_data, vim.log.levels.INFO)
           end)
         else
